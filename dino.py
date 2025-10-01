@@ -4,6 +4,9 @@ from sys import exit
 import os
 from random import randrange
 
+pygame.init()
+pygame.mixer.init()
+
 diretorio_principal = os.path.dirname(__file__)
 diretorio_imagens = os.path.join(diretorio_principal, 'imagens')
 diretorio_sons = os.path.join(diretorio_principal, 'sons')
@@ -25,6 +28,8 @@ sprite_sheet = pygame.image.load(os.path.join(diretorio_imagens, "dinoSpriteshee
 class Dino(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+        self.som_pulo = pygame.mixer.Sound(os.path.join(diretorio_sons, 'jump_sound.wav'))
+        self.som_pulo.set_volume(1)
         self.image_dinossauro = []
         for i in range(3):
             img =  sprite_sheet.subsurface((i*32, 0), (32, 32))
@@ -34,13 +39,29 @@ class Dino(pygame.sprite.Sprite):
         self.index_lista = 0
         self.image = self.image_dinossauro[self.index_lista]
         self.rect = self.image.get_rect()
+        self.pos_y_inicial = ALTURA - 64 - 96//2
         self.rect.center = (100, ALTURA - 64)
+        self.pulo = False
 
     def update(self):
+        if self.pulo == True:
+            if self.rect.y <= 200:
+                self.pulo = False
+            self.rect.y -= 20
+        else:
+            if self.rect.y < self.pos_y_inicial:
+                self.rect.y += 20
+            else:
+                self.rect.y = self.pos_y_inicial
         if self.index_lista > 2:
             self.index_lista = 0
         self.index_lista += 0.25
         self.image = self.image_dinossauro[int(self.index_lista)]
+
+    
+    def pular(self):
+        self.pulo = True
+        self.som_pulo.play()
 
 class Nuvens(pygame.sprite.Sprite):
     def __init__(self):
@@ -94,7 +115,13 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             exit()
-   
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                if dino.rect.y != dino.pos_y_inicial:
+                    pass
+                else:
+                    dino.pular()
+
     todas_as_sprites.draw(tela)
     todas_as_sprites.update()
 
